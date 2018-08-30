@@ -1,0 +1,86 @@
+---
+title: "Relationship Between Transmission Type & Mileage"
+author: "Motor Trend - Vijay Shankar"
+date: "December 15, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Executive Summary
+Motor Trend magazine are interested in the following aspects:
+1. Is an automatic or manual transmission better for MPG
+2. Quantify the MPG difference between automatic and manual transmissions
+## Initial Exploratory Analysis and Data Transformation
+An initial exploratory analysis of the data set is performed and submitted below. Plots / additional information is submitted in Appendix A of this report. 
+```{r, echo=FALSE, message=FALSE, warning=FALSE,results='hide'}
+library(ggplot2)
+data("mtcars")
+head(mtcars)
+str(mtcars)
+
+## Data Transformation ofr factor variables that are shown as number variables in the dataset
+mtcars$cyl  <- factor(mtcars$cyl)
+mtcars$vs   <- factor(mtcars$vs)
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+mtcars$am   <- factor(mtcars$am,labels=c("Automatic","Manual"))
+
+```
+Further, it can be gleaned from Apendix A (Figure 1) that there was an impact on MPG by transmission with Automatic transmissions having a lower MPG.
+## Regression Analysis
+### Model Selection
+Let us build an initial model with only am as the regressor and call this fit1. We will then include the above listed variables (including am) as fit2 and fit 3 would include all the variables.
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+fit1 <- lm(mpg ~ am, data = mtcars)
+summary(fit1)
+fit2 <- lm(mpg~am + cyl + disp + hp + drat + wt + vs, data = mtcars)
+fit3 <- lm(mpg ~. , data = mtcars)
+```
+It can be concluded here that average MPG for automatic is 17.1 MPG, while manual is 7.2 MPG higher.Lets compare these models:
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+anova(fit1,fit2,fit3)
+summary(fit2)
+```
+It can be seen from the summary of fit 1 above that the model with only am explains approximately 36% of the data (R^2). The anova function shows that owing to the p-value, inclusion of other regressors adds value to the analysis. Fit 3 does not add value to the model. The model fit2 explains approximately 87% of the data. From fit 2 we can show that difference between automatic and manual transmissions is 2.56 MPG taking other regressors into consideration.
+## Residuals
+Figure 3 in Apendix A studies the residuals to understand the liverage points for fit2.
+## Inference
+Assuming that the transmission data has a normal distribution, let us perform a t-test to see if manual and auto transmissions are clearly different.
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+t.test(mpg ~ am, data = mtcars)
+```
+## Conclusion
+Based on the observations from our model, we can conclude the following,
+1. Cars with Manual transmission get more miles per gallon mpg compared to cars with Automatic transmission. (2.56 adjusted by cyl, disp, hp, drat, wt and vs).
+2. mpg will decrease by 2.6 (adjusted by cyl, disp, hp, drat,vs and am) for every 1000 lb increase in wt.
+3. mpg decreases negligibly with increase of hp.
+4. If number of cylinders, cyl increases from 4 to 6 and 8, mpg will decrease by a factor of 2 and 0.02 respectively (adjusted by wt, disp, hp, drat,vs and am). 
+
+## Appendix A
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+boxplot(mpg ~ am, data = mtcars, col = (c("indianred","turquoise")), ylab = "Mileage (MPG)", xlab = "Transmission Type")
+```
+Figure 1 Plotting Mileage by Transmission Type 
+
+It was concluded that the variables; cyl, disp, hp, drat, wt, vs and am have a strong correlation with MPG.
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+pairs(mpg ~ ., data = mtcars)
+
+```
+Figure 2 Pairs Plot for Understanding Correlations
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+par(mfrow = c(2,2))
+plot(fit2)
+```
+Figure 3 Residuals & Diagnostics
+From the Figure 3, we can make the following observations,
+1. The points in the Residuals vs. Fitted plot seem to be randomly scattered on the plot and verify the independence condition.
+2. The Normal Q-Q plot consists of the points which mostly fall on the line indicating that the residuals are normally distributed.
+3. The Scale-Location plot consists of points scattered in a constant band pattern, indicating constant variance.
+4. There are some distinct points of interest (outliers or leverage points) in the top right of the plots.

@@ -1,0 +1,159 @@
+---
+title: "Statistical Inference Project 2"
+author: "Vijay Shankar"
+date: "16 November 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Load the ToothGrowth data and perform some basic exploratory data analyses
+
+Let us start by loading the ToothGrowth data from R as well as the required libraries for exploratory analysis.
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(datasets)
+library(ggplot2)
+
+```
+
+The next step is to perform some basic exploratory data analyses. This is typically the step in order to understand nature of data set and to obtain a fair understanding of the volume as well as structure of the data. Let us take a look at the heads of the data set in order to see what the top few data points look like:
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+head(ToothGrowth)
+
+```
+
+We can see that there are 3 variables in the data set, namely, len, supp and dose. Let us look at the structure and summary of the data set.
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+str(ToothGrowth)
+
+```
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+summary(ToothGrowth)
+
+```
+
+We can see that the variable supp is a factor variable while the other 2 variables are numbers. We can also see that there a total of 60 observations divided evenly between OJ and VC type supplements. Looking at the unique values of dosage would give an overview of the range of doses. This will enable us to see if there is value in plotting the lengths and supplements against dosages. 
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+unique(ToothGrowth$dose)
+unique(ToothGrowth$supp)
+unique(ToothGrowth$len)
+
+```
+
+As can be seen from the information above, dose variable is not a continuous one and more like a factor variable. Let us make this variable a factor variable. Also, let us look at the mean lengths for each type of supplement.
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+
+sapply(split(ToothGrowth$len, ToothGrowth$supp), mean)
+
+```
+
+It appears that the overall mean of lengths for OJ is larger than that for VC. However, it is not cear what the spread is and whether there are any outliers. Let us plot a few exploratory graphs to look at the data a bit more.
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+ggplot(aes(x=supp, y=len), data=ToothGrowth) + geom_boxplot(aes(fill=supp))+ 
+        xlab("Supplement type") +ylab("Tooth length") 
+
+sapply(split(ToothGrowth$len, ToothGrowth$dose), mean)
+
+ggplot(aes(x=dose, y=len), data=ToothGrowth) + geom_boxplot(aes(fill=supp)) + 
+        xlab("Dose in miligrams per Supplement") +ylab("Tooth length") 
+
+#Lets plot the histograms of the length distributions for each type of supplement
+
+x<- subset(ToothGrowth, ToothGrowth$supp=="VC")
+y <- subset(ToothGrowth, ToothGrowth$supp=="OJ")
+
+par(mfrow= c(1,2))
+
+hist(x$len, main = "Vitamin C", xlab = "Length")
+hist(y$len, main = "Orange Juice", xlab = "Length")
+
+
+```
+
+From the above graphs, we can see that the means for OJ are higher than those for VC in the lower doses. The spread for OJ is inclined to the right which seems to explain the larger mean. 
+
+## 2. Summary of the Data
+
+The summary of the data can be obtained as below:
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+summary(ToothGrowth)
+
+sapply(split(ToothGrowth$len, ToothGrowth$supp), var)
+
+```
+
+
+## 3. Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose. (Only use the techniques from class, even if there's other approaches worth considering)
+
+Considering that the distributions of lengths as shown above are approximately normal, let us use Student's T-Statistic. 
+
+The null hypothesis H0 can be defined as : The supplement type has no statistically significant effect on the tooth growth.
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+t.test(ToothGrowth$len[ToothGrowth$supp=="OJ"], ToothGrowth$len[ToothGrowth$supp=="VC"], paired = FALSE, var.equal = FALSE)
+
+```
+
+In the above function, we have performed the T-Test on the length variable for each supplement type. Since the data is not paired by nature and the variances are different (as shown in the summary in section 2 above), paired and var.equal are set to False here.
+
+It can be deduced from the outcome of the t-test that the p-value being small (0.06) and the fact that zero lies within the 95% confidence interval, the null hypothesis can not be rejected. Hence supplement type does not have a staistically significant impact on the tooth growth.
+
+Now let us test the impact of dosage levels on tooth growth. 
+
+H0 = the change in dose from 0.5 to 1 does not have an impact on tooth growth.
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+t.test(ToothGrowth$len[ToothGrowth$dose==0.5], ToothGrowth$len[ToothGrowth$dose==1], paired = FALSE, var.equal = FALSE)
+
+```
+
+The p-value is effectively 0, evidence that we can reject the null hypothesis. Therefore we can assume that the means of dosage change from 0.5mg to 1mg creates a positive effect on tooth length.
+
+Let us apply the same to 1mg to 2mg change.
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+
+t.test(ToothGrowth$len[ToothGrowth$dose==1], ToothGrowth$len[ToothGrowth$dose==2], paired = FALSE, var.equal = FALSE)
+
+```
+
+The same applies for this change as well. Hence, it can be deduced that increasing the dosage level increases the tooth growth.
+
+Also in both cases, 0 is not contained within the confidence intervals.
+
+## Conclusion
+
+Based on the t-tests performed above, we can conclude that the change in supplement type does not have an impact on tooth growth but increase in dosage level has a positive impact. 
+
+However, it is important to recognise a few assumptions that underpin this analysis.
+
+## Assumptions
+
+Firstly, the student's T-statistic is applicable only where the underlying distributions are normal. We have seen in the histograms above that this is only an approximation of the data. 
+
+In order for the above test to be applied, it is assumed that the sampling was done using simple random sampling technique.
+
+Based on available information it has been assumed that the variances are heterogeneous.
+
+These assumptions are considered fair in the current context given that the sampling techniques and nature or behaviour of the parameters are not known. In a real world scenario, these aspects of the data play a pivotal role in the choice and application of a hypothesis testing technique.
